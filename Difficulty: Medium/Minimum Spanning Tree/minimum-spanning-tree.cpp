@@ -1,42 +1,78 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-class Solution {
-  public:
-    int spanningTree(int V, vector<vector<int>>& edges) {
-        vector<vector<pair<int,int>>> adj(V);
-        for(auto& it : edges){
-            int u = it[0];
-            int v = it[1];
-            int w = it[2];
-            adj[u].push_back({v, w});
-            adj[v].push_back({u, w});
+// Disjoint Set (Union-Find) with Union by Rank and Union by Size
+class DisjointSet {
+    vector<int> rank, parent, size;
+
+public:
+    DisjointSet(int n) {
+        rank.resize(n + 1, 0);
+        parent.resize(n + 1);
+        size.resize(n + 1, 1);
+        for (int i = 0; i <= n; i++) {
+            parent[i] = i;
         }
+    }
 
-        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int,int>>> pq;
-        vector<int> vis(V, 0);
-        pq.push({0, 0}); // {weight, node}
-        int sum = 0;
+    int findParent(int node) {
+        if (node == parent[node]) return node;
+        return parent[node] = findParent(parent[node]); // Path compression
+    }
 
-        while (!pq.empty()) {
-            auto it = pq.top();
-            pq.pop();
-            int wt = it.first;
-            int node = it.second;
+    void unionByRank(int u, int v) {
+        int pu = findParent(u);
+        int pv = findParent(v);
+        if (pu == pv) return;
 
-            if (vis[node] == 1) continue;
-            vis[node] = 1;
-            sum += wt;
+        if (rank[pu] < rank[pv]) {
+            parent[pu] = pv;
+        } else if (rank[pv] < rank[pu]) {
+            parent[pv] = pu;
+        } else {
+            parent[pv] = pu;
+            rank[pu]++;
+        }
+    }
 
-            for (auto& edge : adj[node]) {
-                int adjNode = edge.first;
-                int edW = edge.second;
-                if (!vis[adjNode]) {
-                    pq.push({edW, adjNode});
-                }
+    void unionBySize(int u, int v) {
+        int pu = findParent(u);
+        int pv = findParent(v);
+        if (pu == pv) return;
+
+        if (size[pu] < size[pv]) {
+            parent[pu] = pv;
+            size[pv] += size[pu];
+        } else {
+            parent[pv] = pu;
+            size[pu] += size[pv];
+        }
+    }
+};
+
+// Kruskal’s Algorithm to find Minimum Spanning Tree (MST)
+class Solution {
+public:
+    int spanningTree(int V, vector<vector<int>>& edges) {
+        // Sort edges by weight
+        sort(edges.begin(), edges.end(), [](vector<int>& a, vector<int>& b) {
+            return a[2] < b[2];
+        });
+
+        DisjointSet ds(V);
+        int mstWeight = 0;
+
+        for (auto& edge : edges) {
+            int u = edge[0];
+            int v = edge[1];
+            int wt = edge[2];
+
+            if (ds.findParent(u) != ds.findParent(v)) {
+                mstWeight += wt;
+                ds.unionBySize(u, v);
             }
         }
 
-        return sum;
+        return mstWeight;
     }
 };
