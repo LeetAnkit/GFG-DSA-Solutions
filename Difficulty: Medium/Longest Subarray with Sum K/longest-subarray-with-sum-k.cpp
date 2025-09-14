@@ -1,33 +1,38 @@
 class Solution {
-public:
+  public:
     int longestSubarray(vector<int>& arr, int k) {
+        // code here
         int n = arr.size();
-        unordered_map<int, int> mp;  // Stores prefixSum -> first index
-        int prefixSum = 0;
-        int maxLen = 0;
-
-        mp[0] = -1; // Handle case where subarray starts from index 0
-
-        for (int i = 0; i < n; i++) {
-            prefixSum += arr[i];
-
-            // Case 1: If current prefixSum itself equals k
-            if (prefixSum == k) {
-                maxLen = max(maxLen, i + 1);
+        unordered_map<long long , int> sum_map;   // {prefix_sum : index}
+        
+        long long current_sum =0;
+        
+        int max_len =0;
+        
+        for( int i =0 ; i< n ; i++){
+            current_sum += arr[i];
+            // case 1  The SubArray with sum k starts from the index 0
+            // if current_sum itself is k , the length is the current index +1;
+             
+            if( current_sum == k){
+                max_len = i+1;
             }
-
-            // Case 2: If a subarray with sum k exists
-            if (mp.find(prefixSum - k) != mp.end()) {
-                int prevIndex = mp[prefixSum - k];
-                maxLen = max(maxLen, i - prevIndex);
+            
+            long long remainder = current_sum - k;
+            
+            if(sum_map.count(remainder)){
+                int length = i - sum_map[remainder];
+                max_len = max( max_len , length);
+                
+                
             }
-
-            // Store prefixSum in map if it's not already there
-            if (mp.find(prefixSum) == mp.end()) {
-                mp[prefixSum] = i;
+            
+            if( sum_map.count(current_sum) == 0){
+                sum_map[current_sum] = i;
             }
+  
         }
-
-        return maxLen;
+        return max_len;
+        
     }
 };
